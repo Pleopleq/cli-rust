@@ -10,21 +10,27 @@ struct CLI {
     path: std::path::PathBuf,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = CLI::parse();
-    let file_content = File::open(&args.path).expect("Could not find file");
-    let mut reader = BufReader::new(file_content);
+    let file_content = File::open(&args.path);
+    let content = match file_content {
+        Ok(file) => file,
+        Err(error) => {
+            return Err(error.into());
+        }
+    };
 
-    let mut content = String::new();
-    reader
-        .read_to_string(&mut content)
-        .expect("Cannot read string");
+    let mut reader = BufReader::new(content);
+    let mut lines = String::new();
+    reader.read_to_string(&mut lines);
 
     println!("pattern: {}, path: {}", args.pattern, args.path.display());
 
-    for line in content.lines() {
+    for line in lines.lines() {
         if line.contains(&args.pattern) {
             println!("Result: {}", line);
         }
     }
+
+    Ok(())
 }
